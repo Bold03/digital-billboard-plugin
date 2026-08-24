@@ -23,6 +23,10 @@ jobs:
       - name: Checkout kode plugin
         uses: actions/checkout@v4
 
+      - name: Matikan symlink saat checkout (fix error di Windows)
+        shell: bash
+        run: git config --global core.symlinks false
+
       - name: Ambil X-Plane SDK
         uses: actions/checkout@v4
         with:
