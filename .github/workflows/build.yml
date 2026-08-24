@@ -1,0 +1,65 @@
+name: Build X-Plane Plugin
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: win
+          - os: macos-latest
+            platform: mac
+          - os: ubuntu-latest
+            platform: lin
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout kode plugin
+        uses: actions/checkout@v4
+
+      - name: Ambil X-Plane SDK
+        uses: actions/checkout@v4
+        with:
+          repository: Coalition-of-Freeware-Developers/X-Plane12-SDK
+          path: XPSDK
+
+      - name: Configure (CMake)
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DXPSDK_PATH=${{ github.workspace }}/XPSDK
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Susun folder output (Windows)
+        if: matrix.platform == 'win'
+        shell: bash
+        run: |
+          mkdir -p out/DigitalBillboardPlugin/win_x64
+          if [ -f build/Release/DigitalBillboardPlugin.xpl ]; then
+            cp build/Release/DigitalBillboardPlugin.xpl out/DigitalBillboardPlugin/win_x64/win.xpl
+          else
+            cp build/DigitalBillboardPlugin.xpl out/DigitalBillboardPlugin/win_x64/win.xpl
+          fi
+
+      - name: Susun folder output (Mac)
+        if: matrix.platform == 'mac'
+        run: |
+          mkdir -p out/DigitalBillboardPlugin/mac_x64
+          cp build/DigitalBillboardPlugin.xpl out/DigitalBillboardPlugin/mac_x64/mac.xpl
+
+      - name: Susun folder output (Linux)
+        if: matrix.platform == 'lin'
+        run: |
+          mkdir -p out/DigitalBillboardPlugin/lin_x64
+          cp build/DigitalBillboardPlugin.xpl out/DigitalBillboardPlugin/lin_x64/lin.xpl
+
+      - name: Upload hasil build
+        uses: actions/upload-artifact@v4
+        with:
+          name: DigitalBillboardPlugin-${{ matrix.platform }}
+          path: out/
